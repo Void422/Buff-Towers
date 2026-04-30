@@ -9,4 +9,6 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 Thumbs.db
-
+.env
+.env.local
+.env.*.local
