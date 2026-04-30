@@ -1,0 +1,85 @@
+{
+  "updatedAt": "2026-04-30T01:34:05.000Z",
+  "towers": [
+    {
+      "server": "1-7",
+      "color": "yellow",
+      "shieldEndsAt": 1777676937,
+      "ownerTribe": "ARK",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:33:08.000Z"
+    },
+    {
+      "server": "1-8",
+      "color": "yellow",
+      "shieldEndsAt": 1777563965,
+      "ownerTribe": "ApexX",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:33:23.000Z"
+    },
+    {
+      "server": "1-9",
+      "color": "yellow",
+      "shieldEndsAt": 1777659187,
+      "ownerTribe": "Apex",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:33:35.000Z"
+    },
+    {
+      "server": "1-12",
+      "color": "green",
+      "shieldEndsAt": 1777667726,
+      "ownerTribe": "ARK",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:33:48.000Z"
+    },
+    {
+      "server": "1-14",
+      "color": "green",
+      "shieldEndsAt": 1777650524,
+      "ownerTribe": "ARIZE",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:33:58.000Z"
+    },
+    {
+      "server": "1-17",
+      "color": "blue",
+      "shieldEndsAt": 1777563746,
+      "ownerTribe": "ARK",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:34:05.000Z"
+    },
+    {
+      "server": "1-18",
+      "color": "blue",
+      "shieldEndsAt": 1777559887,
+      "ownerTribe": "Apex",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:32:55.000Z"
+    },
+    {
+      "server": "1-19",
+      "color": "blue",
+      "shieldEndsAt": 1777685220,
+      "ownerTribe": "ApexX",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-04-30T01:32:32.000Z"
+    }
+  ]
+}
