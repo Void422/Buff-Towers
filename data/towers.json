@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-30T01:34:05.000Z",
+  "updatedAt": "2026-04-30T23:37:38.639Z",
   "towers": [
     {
       "server": "1-7",
@@ -14,12 +14,12 @@
     {
       "server": "1-8",
       "color": "yellow",
-      "shieldEndsAt": 1777563965,
-      "ownerTribe": "ApexX",
+      "shieldEndsAt": 1777740392,
+      "ownerTribe": "GRIM",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:33:23.000Z"
+      "updatedAt": "2026-04-30T23:37:38.639Z"
     },
     {
       "server": "1-9",
@@ -54,22 +54,22 @@
     {
       "server": "1-17",
       "color": "blue",
-      "shieldEndsAt": 1777563746,
+      "shieldEndsAt": 1777740180,
       "ownerTribe": "ARK",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:34:05.000Z"
+      "updatedAt": "2026-04-30T23:37:38.639Z"
     },
     {
       "server": "1-18",
       "color": "blue",
-      "shieldEndsAt": 1777559887,
-      "ownerTribe": "Apex",
+      "shieldEndsAt": 1777736314,
+      "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:32:55.000Z"
+      "updatedAt": "2026-04-30T23:37:38.639Z"
     },
     {
       "server": "1-19",
