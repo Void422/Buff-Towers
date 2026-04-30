@@ -8,6 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   min-height: 64px;
   padding: 0 4px;
   color: #f7fbff;
@@ -22,6 +23,41 @@
 .topBarMeta {
   color: #91a1bb;
   font-size: 0.92rem;
+}
+
+.topBarControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.control {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.control span {
+  color: #8fa0bc;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(132, 150, 181, 0.24);
+  background: rgba(28, 40, 61, 0.94);
+  color: #f7fbff;
+  font: inherit;
+}
+
+.select:focus {
+  outline: 2px solid rgba(43, 140, 255, 0.22);
+  border-color: rgba(43, 140, 255, 0.55);
 }
 
 .hero {
@@ -391,7 +427,14 @@
   }
 
   .topBar {
+    align-items: stretch;
+    flex-direction: column;
     min-height: 58px;
+  }
+
+  .topBarControls,
+  .control {
+    width: 100%;
   }
 
   .hero {

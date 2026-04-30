@@ -15,6 +15,10 @@ import {
 } from "@/lib/tower-core";
 import styles from "./TowerDashboard.module.css";
 
+type LanguageCode = "en" | "ja" | "zh-Hant";
+type TimerKey = "shield" | "claim" | "live";
+type StatusKey = "shielded" | "capturing" | "live";
+
 type ShieldEditorState = {
   server: string;
   shieldUnixValue: string;
@@ -37,38 +41,297 @@ type NoticeState = {
   message: string;
 } | null;
 
+type DisplayTower = TowerRecord & {
+  phase: TowerPhase;
+  captureEndsAt: number | null;
+  timerEndsAt: number | null;
+  timerKey: TimerKey;
+  statusKey: StatusKey;
+  progress: number;
+};
+
+type Translation = {
+  locale: string;
+  nativeName: string;
+  appTitle: string;
+  language: string;
+  timezone: string;
+  heroTitle: string;
+  nextTower: string;
+  startsIn: string;
+  liveNow: string;
+  lastSync: string;
+  nextBuff: string;
+  claimInProgress: string;
+  upcoming: (value: number) => string;
+  owner: string;
+  trying: string;
+  tribe: string;
+  ownerTribe: string;
+  shieldPopsAt: string;
+  unixTimestamp: string;
+  shield: string;
+  claim: string;
+  live: string;
+  shielded: string;
+  capturing: string;
+  openToClaim: string;
+  oneHourRunning: string;
+  ready: string;
+  done: string;
+  popsIn: (value: string) => string;
+  editShield: string;
+  startClaim: string;
+  stoleTower: string;
+  copyTs: string;
+  copied: string;
+  saveShield: string;
+  saveSteal: string;
+  saving: string;
+  cancel: string;
+  invalidShieldTimestamp: string;
+  tribeRequired: string;
+  updated: (server: string) => string;
+  stolenBy: (server: string, tribe: string) => string;
+  claimStartedFor: (server: string, tribe: string) => string;
+  closeShieldEditor: string;
+  closeCaptureEditor: string;
+  shieldEditorTitle: string;
+  captureEditorTitle: string;
+  stealEditorTitle: string;
+  buffLabels: Record<TowerColor, string>;
+  durationUnits: {
+    day: string;
+    hour: string;
+    minute: string;
+    second: string;
+  };
+};
+
 type ColorMeta = {
-  label: string;
   accent: string;
   accentSoft: string;
   image: string;
 };
 
-type DisplayTower = TowerRecord & {
-  phase: TowerPhase;
-  captureEndsAt: number | null;
-  timerEndsAt: number | null;
-  timerLabel: string;
-  statusLabel: string;
-  statusDetail: string;
-  progress: number;
+const TRANSLATIONS: Record<LanguageCode, Translation> = {
+  en: {
+    locale: "en-US",
+    nativeName: "English",
+    appTitle: "Buff Towers",
+    language: "Language",
+    timezone: "Timezone",
+    heroTitle: "Upcoming Buffs",
+    nextTower: "Next tower",
+    startsIn: "Starts in",
+    liveNow: "Live now",
+    lastSync: "Last sync",
+    nextBuff: "Next buff",
+    claimInProgress: "Claim in progress",
+    upcoming: (value) => `Upcoming ${value}`,
+    owner: "Owner",
+    trying: "Trying",
+    tribe: "Tribe",
+    ownerTribe: "Owner tribe",
+    shieldPopsAt: "Shield pops at",
+    unixTimestamp: "Unix timestamp",
+    shield: "Shield",
+    claim: "Claim",
+    live: "Live",
+    shielded: "Shielded",
+    capturing: "Capturing",
+    openToClaim: "Open to claim",
+    oneHourRunning: "1h running",
+    ready: "Ready",
+    done: "Done",
+    popsIn: (value) => `Pops in ${value}`,
+    editShield: "Edit shield",
+    startClaim: "Start claim",
+    stoleTower: "Stole tower",
+    copyTs: "Copy ts",
+    copied: "Copied",
+    saveShield: "Save shield",
+    saveSteal: "Save steal",
+    saving: "Saving...",
+    cancel: "Cancel",
+    invalidShieldTimestamp: "Shield end timestamp is invalid.",
+    tribeRequired: "Tribe name is required.",
+    updated: (server) => `${server} updated.`,
+    stolenBy: (server, tribe) => `${server} stolen by ${tribe}.`,
+    claimStartedFor: (server, tribe) => `${server} claim started for ${tribe}.`,
+    closeShieldEditor: "Close shield editor",
+    closeCaptureEditor: "Close capture editor",
+    shieldEditorTitle: "Edit shield",
+    captureEditorTitle: "Start claim",
+    stealEditorTitle: "Stole tower",
+    buffLabels: {
+      yellow: "Mate buff",
+      green: "Growth buff",
+      blue: "Incubator buff",
+    },
+    durationUnits: {
+      day: "d",
+      hour: "h",
+      minute: "m",
+      second: "s",
+    },
+  },
+  ja: {
+    locale: "ja-JP",
+    nativeName: "日本語",
+    appTitle: "バフタワー",
+    language: "言語",
+    timezone: "タイムゾーン",
+    heroTitle: "今後のバフ",
+    nextTower: "次のタワー",
+    startsIn: "開始まで",
+    liveNow: "現在ライブ",
+    lastSync: "最終同期",
+    nextBuff: "次のバフ",
+    claimInProgress: "占領進行中",
+    upcoming: (value) => `予定 ${value}`,
+    owner: "所有",
+    trying: "挑戦中",
+    tribe: "部族",
+    ownerTribe: "所有部族",
+    shieldPopsAt: "シールド終了",
+    unixTimestamp: "Unix タイムスタンプ",
+    shield: "シールド",
+    claim: "占領",
+    live: "ライブ",
+    shielded: "シールド中",
+    capturing: "占領中",
+    openToClaim: "占領可能",
+    oneHourRunning: "1時間進行中",
+    ready: "開始可能",
+    done: "完了",
+    popsIn: (value) => `${value}後に出現`,
+    editShield: "シールド編集",
+    startClaim: "占領開始",
+    stoleTower: "奪取した",
+    copyTs: "時刻コピー",
+    copied: "コピー済み",
+    saveShield: "シールド保存",
+    saveSteal: "奪取を保存",
+    saving: "保存中...",
+    cancel: "キャンセル",
+    invalidShieldTimestamp: "シールド終了タイムスタンプが無効です。",
+    tribeRequired: "部族名は必須です。",
+    updated: (server) => `${server} を更新しました。`,
+    stolenBy: (server, tribe) => `${server} は ${tribe} に奪取されました。`,
+    claimStartedFor: (server, tribe) => `${server} の占領を ${tribe} で開始しました。`,
+    closeShieldEditor: "シールド編集を閉じる",
+    closeCaptureEditor: "占領編集を閉じる",
+    shieldEditorTitle: "シールド編集",
+    captureEditorTitle: "占領開始",
+    stealEditorTitle: "奪取した",
+    buffLabels: {
+      yellow: "交配バフ",
+      green: "成長バフ",
+      blue: "孵化バフ",
+    },
+    durationUnits: {
+      day: "日",
+      hour: "時間",
+      minute: "分",
+      second: "秒",
+    },
+  },
+  "zh-Hant": {
+    locale: "zh-Hant-TW",
+    nativeName: "繁體中文",
+    appTitle: "增益塔",
+    language: "語言",
+    timezone: "時區",
+    heroTitle: "即將到來的增益",
+    nextTower: "下一座塔",
+    startsIn: "開始倒數",
+    liveNow: "目前可打",
+    lastSync: "最後同步",
+    nextBuff: "下一個增益",
+    claimInProgress: "佔領進行中",
+    upcoming: (value) => `即將到來 ${value}`,
+    owner: "持有者",
+    trying: "嘗試中",
+    tribe: "部落",
+    ownerTribe: "持有部落",
+    shieldPopsAt: "護盾結束時間",
+    unixTimestamp: "Unix 時間戳",
+    shield: "護盾",
+    claim: "佔領",
+    live: "開放",
+    shielded: "護盾中",
+    capturing: "佔領中",
+    openToClaim: "可開始佔領",
+    oneHourRunning: "1 小時進行中",
+    ready: "可開始",
+    done: "完成",
+    popsIn: (value) => `${value}後開放`,
+    editShield: "編輯護盾",
+    startClaim: "開始佔領",
+    stoleTower: "偷塔",
+    copyTs: "複製時間",
+    copied: "已複製",
+    saveShield: "儲存護盾",
+    saveSteal: "儲存偷塔",
+    saving: "儲存中...",
+    cancel: "取消",
+    invalidShieldTimestamp: "護盾結束時間戳無效。",
+    tribeRequired: "必須填寫部落名稱。",
+    updated: (server) => `${server} 已更新。`,
+    stolenBy: (server, tribe) => `${server} 已被 ${tribe} 偷塔。`,
+    claimStartedFor: (server, tribe) => `${server} 已由 ${tribe} 開始佔領。`,
+    closeShieldEditor: "關閉護盾編輯",
+    closeCaptureEditor: "關閉佔領編輯",
+    shieldEditorTitle: "編輯護盾",
+    captureEditorTitle: "開始佔領",
+    stealEditorTitle: "偷塔",
+    buffLabels: {
+      yellow: "交配增益",
+      green: "成長增益",
+      blue: "孵化增益",
+    },
+    durationUnits: {
+      day: "天",
+      hour: "小時",
+      minute: "分",
+      second: "秒",
+    },
+  },
 };
+
+const LANGUAGE_OPTIONS: LanguageCode[] = ["en", "ja", "zh-Hant"];
+const LANGUAGE_STORAGE_KEY = "buff-towers-language";
+const TIMEZONE_STORAGE_KEY = "buff-towers-timezone";
+const FALLBACK_TIMEZONES = [
+  "UTC",
+  "America/Toronto",
+  "America/New_York",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+  "Asia/Tokyo",
+  "Asia/Taipei",
+  "Asia/Hong_Kong",
+  "Australia/Sydney",
+];
+const TIMEZONE_OPTIONS =
+  typeof Intl.supportedValuesOf === "function"
+    ? Intl.supportedValuesOf("timeZone")
+    : FALLBACK_TIMEZONES;
 
 const COLOR_META: Record<TowerColor, ColorMeta> = {
   yellow: {
-    label: "Mate buff",
     accent: "#f0bf40",
     accentSoft: "rgba(240, 191, 64, 0.12)",
     image: "/tower-art/yellow-clean.png",
   },
   green: {
-    label: "Growth buff",
     accent: "#57c276",
     accentSoft: "rgba(87, 194, 118, 0.12)",
     image: "/tower-art/green-clean.png",
   },
   blue: {
-    label: "Incubator buff",
     accent: "#3790ff",
     accentSoft: "rgba(55, 144, 255, 0.12)",
     image: "/tower-art/blue-clean.png",
@@ -79,26 +342,126 @@ function clamp(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
-function formatDuration(totalSeconds: number) {
+function detectLanguage(): LanguageCode {
+  if (typeof navigator === "undefined") {
+    return "en";
+  }
+
+  const language = navigator.language.toLowerCase();
+
+  if (language.startsWith("ja")) {
+    return "ja";
+  }
+
+  if (
+    language.startsWith("zh-hant") ||
+    language.startsWith("zh-tw") ||
+    language.startsWith("zh-hk") ||
+    language.startsWith("zh-mo")
+  ) {
+    return "zh-Hant";
+  }
+
+  return "en";
+}
+
+function getBrowserTimezone() {
+  if (typeof Intl === "undefined") {
+    return "UTC";
+  }
+
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+function getZonedParts(date: Date, timeZone: string) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+
+  const rawParts = formatter.formatToParts(date);
+  const lookup = Object.fromEntries(rawParts.map((part) => [part.type, part.value]));
+
+  return {
+    year: Number(lookup.year),
+    month: Number(lookup.month),
+    day: Number(lookup.day),
+    hour: Number(lookup.hour),
+    minute: Number(lookup.minute),
+    second: Number(lookup.second),
+  };
+}
+
+function toDatetimeInputValue(unixSeconds: number, timeZone: string) {
+  const parts = getZonedParts(new Date(unixSeconds * 1000), timeZone);
+
+  return `${parts.year}-${`${parts.month}`.padStart(2, "0")}-${`${parts.day}`.padStart(2, "0")}T${`${parts.hour}`.padStart(2, "0")}:${`${parts.minute}`.padStart(2, "0")}`;
+}
+
+function fromDatetimeInputValue(value: string, timeZone: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+
+  if (!match) {
+    return Number.NaN;
+  }
+
+  const [, yearText, monthText, dayText, hourText, minuteText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const targetAsUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
+  let guess = targetAsUtc;
+
+  for (let index = 0; index < 4; index += 1) {
+    const actual = getZonedParts(new Date(guess), timeZone);
+    const actualAsUtc = Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute, 0);
+    const diff = targetAsUtc - actualAsUtc;
+
+    if (diff === 0) {
+      break;
+    }
+
+    guess += diff;
+  }
+
+  return Math.floor(guess / 1000);
+}
+
+function formatDuration(totalSeconds: number, translation: Translation) {
   const safe = Math.max(0, totalSeconds);
   const days = Math.floor(safe / 86_400);
   const hours = Math.floor((safe % 86_400) / 3_600);
   const minutes = Math.floor((safe % 3_600) / 60);
   const seconds = safe % 60;
+  const units = translation.durationUnits;
 
   const parts = [
-    days > 0 ? `${days}d` : null,
-    days > 0 || hours > 0 ? `${hours}h` : null,
-    `${minutes}m`,
-    `${seconds.toString().padStart(2, "0")}s`,
+    days > 0 ? `${days}${units.day}` : null,
+    days > 0 || hours > 0 ? `${hours}${units.hour}` : null,
+    `${minutes}${units.minute}`,
+    `${seconds.toString().padStart(2, "0")}${units.second}`,
   ].filter(Boolean);
 
   return parts.join(" ");
 }
 
-function formatAbsoluteTime(unixSeconds: number | null, mounted: boolean) {
+function formatAbsoluteTime(
+  unixSeconds: number | null,
+  mounted: boolean,
+  language: LanguageCode,
+  timeZone: string,
+  liveNowLabel: string,
+) {
   if (unixSeconds === null) {
-    return "Live now";
+    return liveNowLabel;
   }
 
   const date = new Date(unixSeconds * 1000);
@@ -107,29 +470,11 @@ function formatAbsoluteTime(unixSeconds: number | null, mounted: boolean) {
     return `${date.toISOString().replace("T", " ").slice(0, 16)} UTC`;
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(TRANSLATIONS[language].locale, {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone,
   }).format(date);
-}
-
-function getTimezoneLabel(mounted: boolean) {
-  if (!mounted) {
-    return "Local";
-  }
-
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
-}
-
-function toDatetimeLocalValue(unixSeconds: number) {
-  const date = new Date(unixSeconds * 1000);
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  const hours = `${date.getHours()}`.padStart(2, "0");
-  const minutes = `${date.getMinutes()}`.padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 function getDisplayTower(tower: TowerRecord, currentSeconds: number): DisplayTower {
@@ -145,9 +490,8 @@ function getDisplayTower(tower: TowerRecord, currentSeconds: number): DisplayTow
       phase,
       captureEndsAt: null,
       timerEndsAt: resolved.shieldEndsAt,
-      timerLabel: "Shield",
-      statusLabel: "Shielded",
-      statusDetail: `Pops in ${formatDuration(remaining)}`,
+      timerKey: "shield",
+      statusKey: "shielded",
       progress: clamp((SHIELD_DURATION_SECONDS - remaining) / SHIELD_DURATION_SECONDS),
     };
   }
@@ -160,9 +504,8 @@ function getDisplayTower(tower: TowerRecord, currentSeconds: number): DisplayTow
       phase,
       captureEndsAt,
       timerEndsAt: captureEndsAt,
-      timerLabel: "Claim",
-      statusLabel: "Capturing",
-      statusDetail: resolved.contestingTribe ?? "1h running",
+      timerKey: "claim",
+      statusKey: "capturing",
       progress: clamp((CAPTURE_DURATION_SECONDS - remaining) / CAPTURE_DURATION_SECONDS),
     };
   }
@@ -172,29 +515,52 @@ function getDisplayTower(tower: TowerRecord, currentSeconds: number): DisplayTow
     phase,
     captureEndsAt: null,
     timerEndsAt: null,
-    timerLabel: "Live",
-    statusLabel: "Live",
-    statusDetail: "Open to claim",
+    timerKey: "live",
+    statusKey: "live",
     progress: 0,
   };
 }
 
-function getCountdownValue(tower: DisplayTower, currentSeconds: number) {
+function getTimerLabel(timerKey: TimerKey, translation: Translation) {
+  if (timerKey === "shield") {
+    return translation.shield;
+  }
+
+  if (timerKey === "claim") {
+    return translation.claim;
+  }
+
+  return translation.live;
+}
+
+function getCountdownValue(tower: DisplayTower, currentSeconds: number, translation: Translation) {
   if (tower.timerEndsAt === null) {
-    return "Ready";
+    return translation.ready;
   }
 
   const remaining = tower.timerEndsAt - currentSeconds;
 
   if (remaining <= 0) {
-    return tower.phase === "shielded" ? "Live" : "Done";
+    return tower.phase === "shielded" ? translation.liveNow : translation.done;
   }
 
-  return formatDuration(remaining);
+  return formatDuration(remaining, translation);
 }
 
-function getTowerAbsoluteLabel(tower: DisplayTower, mounted: boolean) {
-  return formatAbsoluteTime(tower.timerEndsAt ?? (tower.phase === "shielded" ? tower.shieldEndsAt : null), mounted);
+function getTowerAbsoluteLabel(
+  tower: DisplayTower,
+  mounted: boolean,
+  language: LanguageCode,
+  timeZone: string,
+  translation: Translation,
+) {
+  return formatAbsoluteTime(
+    tower.timerEndsAt ?? (tower.phase === "shielded" ? tower.shieldEndsAt : null),
+    mounted,
+    language,
+    timeZone,
+    translation.liveNow,
+  );
 }
 
 function getAttemptingLabel(tower: DisplayTower) {
@@ -205,20 +571,20 @@ function getProgressWidth(tower: DisplayTower) {
   return `${Math.round(tower.progress * 100)}%`;
 }
 
-function getTimelineLabel(tower: DisplayTower, upcomingOrder: number | undefined) {
+function getTimelineLabel(tower: DisplayTower, upcomingOrder: number | undefined, translation: Translation) {
   if (tower.phase === "capturing") {
-    return "Claim in progress";
+    return translation.claimInProgress;
   }
 
   if (tower.phase === "open") {
-    return "Live now";
+    return translation.liveNow;
   }
 
   if (upcomingOrder === 1) {
-    return "Next buff";
+    return translation.nextBuff;
   }
 
-  return `Upcoming ${upcomingOrder}`;
+  return translation.upcoming(upcomingOrder ?? 0);
 }
 
 function getTimelineNodeText(tower: DisplayTower, upcomingOrder: number | undefined) {
@@ -237,14 +603,38 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [mounted, setMounted] = useState(false);
   const [nowMs, setNowMs] = useState<number | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
+  const [selectedTimezone, setSelectedTimezone] = useState("UTC");
   const [notice, setNotice] = useState<NoticeState>(null);
   const [copiedServer, setCopiedServer] = useState<string | null>(null);
   const [shieldEditor, setShieldEditor] = useState<ShieldEditorState | null>(null);
   const [captureEditor, setCaptureEditor] = useState<CaptureEditorState | null>(null);
 
+  const translation = TRANSLATIONS[selectedLanguage];
+
   useEffect(() => {
     setMounted(true);
     setNowMs(Date.now());
+
+    if (typeof window !== "undefined") {
+      const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      const storedTimezone = window.localStorage.getItem(TIMEZONE_STORAGE_KEY);
+      const browserTimezone = getBrowserTimezone();
+
+      if (storedLanguage && LANGUAGE_OPTIONS.includes(storedLanguage as LanguageCode)) {
+        setSelectedLanguage(storedLanguage as LanguageCode);
+      } else {
+        setSelectedLanguage(detectLanguage());
+      }
+
+      if (storedTimezone && TIMEZONE_OPTIONS.includes(storedTimezone)) {
+        setSelectedTimezone(storedTimezone);
+      } else if (TIMEZONE_OPTIONS.includes(browserTimezone)) {
+        setSelectedTimezone(browserTimezone);
+      } else {
+        setSelectedTimezone("UTC");
+      }
+    }
 
     async function refreshSnapshot() {
       const response = await fetch("/api/towers", {
@@ -274,6 +664,38 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       window.clearInterval(poll);
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, selectedLanguage);
+    window.localStorage.setItem(TIMEZONE_STORAGE_KEY, selectedTimezone);
+  }, [mounted, selectedLanguage, selectedTimezone]);
+
+  useEffect(() => {
+    if (!shieldEditor) {
+      return;
+    }
+
+    setShieldEditor((current) =>
+      current
+        ? (() => {
+            const nextDatetimeValue = toDatetimeInputValue(Number(current.shieldUnixValue), selectedTimezone);
+
+            if (current.datetimeValue === nextDatetimeValue) {
+              return current;
+            }
+
+            return {
+              ...current,
+              datetimeValue: nextDatetimeValue,
+            };
+          })()
+        : current,
+    );
+  }, [selectedTimezone, shieldEditor]);
 
   useEffect(() => {
     if (!notice && !copiedServer) {
@@ -325,7 +747,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     setShieldEditor({
       server: tower.server,
       shieldUnixValue: `${tower.shieldEndsAt}`,
-      datetimeValue: toDatetimeLocalValue(tower.shieldEndsAt),
+      datetimeValue: toDatetimeInputValue(tower.shieldEndsAt, selectedTimezone),
       ownerTribe: tower.ownerTribe ?? "",
       status: "idle",
     });
@@ -351,7 +773,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       return {
         ...current,
         shieldUnixValue: `${shieldEndsAt}`,
-        datetimeValue: toDatetimeLocalValue(shieldEndsAt),
+        datetimeValue: toDatetimeInputValue(shieldEndsAt, selectedTimezone),
         status: "idle",
         error: undefined,
       };
@@ -364,15 +786,13 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         return current;
       }
 
-      const date = new Date(value);
-      const shieldUnixValue = Number.isNaN(date.getTime())
-        ? current.shieldUnixValue
-        : `${Math.floor(date.getTime() / 1000)}`;
+      const shieldEndsAt = fromDatetimeInputValue(value, selectedTimezone);
 
       return {
         ...current,
         datetimeValue: value,
-        shieldUnixValue,
+        shieldUnixValue:
+          Number.isInteger(shieldEndsAt) && shieldEndsAt > 0 ? `${shieldEndsAt}` : current.shieldUnixValue,
         status: "idle",
         error: undefined,
       };
@@ -392,7 +812,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         shieldUnixValue: value,
         datetimeValue:
           Number.isInteger(shieldEndsAt) && shieldEndsAt > 0
-            ? toDatetimeLocalValue(shieldEndsAt)
+            ? toDatetimeInputValue(shieldEndsAt, selectedTimezone)
             : current.datetimeValue,
         status: "idle",
         error: undefined,
@@ -411,7 +831,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       setShieldEditor({
         ...shieldEditor,
         status: "error",
-        error: "Shield end timestamp is invalid.",
+        error: translation.invalidShieldTimestamp,
       });
       return;
     }
@@ -449,7 +869,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       setShieldEditor(null);
       setNotice({
         tone: "success",
-        message: `${shieldEditor.server} updated.`,
+        message: translation.updated(shieldEditor.server),
       });
     } catch (error) {
       setShieldEditor((current) =>
@@ -457,7 +877,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
           ? {
               ...current,
               status: "error",
-              error: error instanceof Error ? error.message : "Could not update shield time.",
+              error: error instanceof Error ? error.message : translation.invalidShieldTimestamp,
             }
           : current,
       );
@@ -473,7 +893,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       setCaptureEditor({
         ...captureEditor,
         status: "error",
-        error: "Tribe name is required.",
+        error: translation.tribeRequired,
       });
       return;
     }
@@ -513,8 +933,8 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         tone: "success",
         message:
           captureEditor.mode === "stole"
-            ? `${captureEditor.server} stolen by ${captureEditor.tribe}.`
-            : `${captureEditor.server} claim started for ${captureEditor.tribe}.`,
+            ? translation.stolenBy(captureEditor.server, captureEditor.tribe)
+            : translation.claimStartedFor(captureEditor.server, captureEditor.tribe),
       });
     } catch (error) {
       setCaptureEditor((current) =>
@@ -522,7 +942,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
           ? {
               ...current,
               status: "error",
-              error: error instanceof Error ? error.message : "Could not start that capture.",
+              error: error instanceof Error ? error.message : translation.tribeRequired,
             }
           : current,
       );
@@ -532,29 +952,60 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   return (
     <main className={styles.shell}>
       <header className={styles.topBar}>
-        <div className={styles.topBarTitle}>Buff Towers</div>
-        <div className={styles.topBarMeta}>{getTimezoneLabel(mounted)}</div>
+        <div className={styles.topBarTitle}>{translation.appTitle}</div>
+
+        <div className={styles.topBarControls}>
+          <label className={styles.control}>
+            <span>{translation.language}</span>
+            <select
+              className={styles.select}
+              value={selectedLanguage}
+              onChange={(event) => setSelectedLanguage(event.target.value as LanguageCode)}
+            >
+              {LANGUAGE_OPTIONS.map((language) => (
+                <option key={language} value={language}>
+                  {TRANSLATIONS[language].nativeName}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.control}>
+            <span>{translation.timezone}</span>
+            <select
+              className={styles.select}
+              value={selectedTimezone}
+              onChange={(event) => setSelectedTimezone(event.target.value)}
+            >
+              {TIMEZONE_OPTIONS.map((timeZone) => (
+                <option key={timeZone} value={timeZone}>
+                  {timeZone}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
 
       <section className={styles.hero}>
-        <h1 className={styles.heroTitle}>Upcoming Buffs</h1>
+        <h1 className={styles.heroTitle}>{translation.heroTitle}</h1>
 
         <div className={styles.summaryRow}>
           <div className={styles.summaryCard}>
-            <span>Next tower</span>
+            <span>{translation.nextTower}</span>
             <strong>{nextTower.server}</strong>
           </div>
           <div className={styles.summaryCard}>
-            <span>Starts in</span>
-            <strong>{getCountdownValue(nextTower, currentSeconds)}</strong>
+            <span>{translation.startsIn}</span>
+            <strong>{getCountdownValue(nextTower, currentSeconds, translation)}</strong>
           </div>
           <div className={styles.summaryCard}>
-            <span>Live now</span>
+            <span>{translation.liveNow}</span>
             <strong>{liveTowers.length}</strong>
           </div>
           <div className={styles.summaryCard}>
-            <span>Last sync</span>
-            <strong>{formatAbsoluteTime(lastUpdated, mounted)}</strong>
+            <span>{translation.lastSync}</span>
+            <strong>{formatAbsoluteTime(lastUpdated, mounted, selectedLanguage, selectedTimezone, translation.liveNow)}</strong>
           </div>
         </div>
       </section>
@@ -591,17 +1042,19 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
               >
                 <div className={styles.eventTop}>
                   <div className={styles.eventText}>
-                    <span className={styles.eventLabel}>{getTimelineLabel(tower, order)}</span>
+                    <span className={styles.eventLabel}>{getTimelineLabel(tower, order, translation)}</span>
                     <h2 className={styles.eventTitle}>
-                      {tower.server} · {meta.label}
+                      {tower.server} · {translation.buffLabels[tower.color]}
                     </h2>
-                    <p className={styles.eventTime}>{getTowerAbsoluteLabel(tower, mounted)}</p>
+                    <p className={styles.eventTime}>
+                      {getTowerAbsoluteLabel(tower, mounted, selectedLanguage, selectedTimezone, translation)}
+                    </p>
                   </div>
 
                   <div className={styles.eventArtBox}>
                     <Image
                       src={meta.image}
-                      alt={`${meta.label} tower`}
+                      alt={`${translation.buffLabels[tower.color]} tower`}
                       width={84}
                       height={112}
                       className={styles.eventArt}
@@ -611,16 +1064,16 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
 
                 <div className={styles.eventStats}>
                   <div className={styles.statBlock}>
-                    <span>Owner</span>
+                    <span>{translation.owner}</span>
                     <strong>{tower.ownerTribe ?? "[-]"}</strong>
                   </div>
                   <div className={styles.statBlock}>
-                    <span>Trying</span>
+                    <span>{translation.trying}</span>
                     <strong>{getAttemptingLabel(tower)}</strong>
                   </div>
                   <div className={styles.statBlock}>
-                    <span>{tower.timerLabel}</span>
-                    <strong>{getCountdownValue(tower, currentSeconds)}</strong>
+                    <span>{getTimerLabel(tower.timerKey, translation)}</span>
+                    <strong>{getCountdownValue(tower, currentSeconds, translation)}</strong>
                   </div>
                 </div>
 
@@ -633,26 +1086,26 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
                 <div className={styles.actions}>
                   {tower.phase === "capturing" ? (
                     <button className={styles.primaryButton} onClick={() => openCaptureEditor(tower, "stole")}>
-                      Stole tower
+                      {translation.stoleTower}
                     </button>
                   ) : tower.phase === "open" ? (
                     <button className={styles.primaryButton} onClick={() => openCaptureEditor(tower, "claim")}>
-                      Start claim
+                      {translation.startClaim}
                     </button>
                   ) : (
                     <button className={styles.secondaryButton} onClick={() => openShieldEditor(tower)}>
-                      Edit shield
+                      {translation.editShield}
                     </button>
                   )}
 
                   {tower.phase !== "shielded" ? (
                     <button className={styles.secondaryButton} onClick={() => openShieldEditor(tower)}>
-                      Edit shield
+                      {translation.editShield}
                     </button>
                   ) : null}
 
                   <button className={styles.ghostButton} onClick={() => void copyDiscordTimestamp(tower.server, tower.shieldEndsAt)}>
-                    {copiedServer === tower.server ? "Copied" : "Copy ts"}
+                    {copiedServer === tower.server ? translation.copied : translation.copyTs}
                   </button>
                 </div>
               </div>
@@ -666,16 +1119,20 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <span className={styles.modalLabel}>Edit shield</span>
+                <span className={styles.modalLabel}>{translation.shieldEditorTitle}</span>
                 <h2>{shieldEditor.server}</h2>
               </div>
-              <button className={styles.closeButton} onClick={() => setShieldEditor(null)} aria-label="Close shield editor">
+              <button
+                className={styles.closeButton}
+                onClick={() => setShieldEditor(null)}
+                aria-label={translation.closeShieldEditor}
+              >
                 ×
               </button>
             </div>
 
             <label className={styles.field}>
-              <span>Owner tribe</span>
+              <span>{translation.ownerTribe}</span>
               <input
                 value={shieldEditor.ownerTribe}
                 onChange={(event) =>
@@ -694,7 +1151,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
             </label>
 
             <label className={styles.field}>
-              <span>Shield pops at</span>
+              <span>{translation.shieldPopsAt}</span>
               <input
                 type="datetime-local"
                 value={shieldEditor.datetimeValue}
@@ -703,7 +1160,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
             </label>
 
             <label className={styles.field}>
-              <span>Unix timestamp</span>
+              <span>{translation.unixTimestamp}</span>
               <input value={shieldEditor.shieldUnixValue} onChange={(event) => updateShieldFromUnix(event.target.value)} />
             </label>
 
@@ -726,10 +1183,10 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
 
             <div className={styles.modalActions}>
               <button className={styles.secondaryButton} onClick={() => setShieldEditor(null)}>
-                Cancel
+                {translation.cancel}
               </button>
               <button className={styles.primaryButton} onClick={() => void saveShield()} disabled={shieldEditor.status === "saving"}>
-                {shieldEditor.status === "saving" ? "Saving..." : "Save shield"}
+                {shieldEditor.status === "saving" ? translation.saving : translation.saveShield}
               </button>
             </div>
           </div>
@@ -741,16 +1198,22 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
           <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <span className={styles.modalLabel}>{captureEditor.mode === "stole" ? "Stole tower" : "Start claim"}</span>
+                <span className={styles.modalLabel}>
+                  {captureEditor.mode === "stole" ? translation.stealEditorTitle : translation.captureEditorTitle}
+                </span>
                 <h2>{captureEditor.server}</h2>
               </div>
-              <button className={styles.closeButton} onClick={() => setCaptureEditor(null)} aria-label="Close capture editor">
+              <button
+                className={styles.closeButton}
+                onClick={() => setCaptureEditor(null)}
+                aria-label={translation.closeCaptureEditor}
+              >
                 ×
               </button>
             </div>
 
             <label className={styles.field}>
-              <span>Tribe</span>
+              <span>{translation.tribe}</span>
               <input
                 value={captureEditor.tribe}
                 onChange={(event) =>
@@ -772,14 +1235,14 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
 
             <div className={styles.modalActions}>
               <button className={styles.secondaryButton} onClick={() => setCaptureEditor(null)}>
-                Cancel
+                {translation.cancel}
               </button>
               <button className={styles.primaryButton} onClick={() => void saveCapture()} disabled={captureEditor.status === "saving"}>
                 {captureEditor.status === "saving"
-                  ? "Saving..."
+                  ? translation.saving
                   : captureEditor.mode === "stole"
-                    ? "Save steal"
-                    : "Start claim"}
+                    ? translation.saveSteal
+                    : translation.startClaim}
               </button>
             </div>
           </div>
