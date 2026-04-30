@@ -395,6 +395,42 @@
   border-color: rgba(43, 140, 255, 0.55);
 }
 
+.tribeAssist {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.tribeSuggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tribeSuggestionButton,
+.tribeAddButton {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(132, 150, 181, 0.24);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f7fbff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.tribeSuggestionButton:hover,
+.tribeAddButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tribeAddButton {
+  justify-self: start;
+  border-color: rgba(55, 144, 255, 0.42);
+  background: rgba(55, 144, 255, 0.14);
+}
+
 .quickActions,
 .modalActions {
   margin-top: 16px;
@@ -481,10 +517,21 @@
     justify-content: flex-start;
   }
 
-  .actions,
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .actions > :first-child {
+    grid-column: 1 / -1;
+  }
+
   .quickActions,
   .modalActions {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .primaryButton,
@@ -492,5 +539,10 @@
   .ghostButton,
   .quickButton {
     width: 100%;
+  }
+
+  .modalActions > :first-child,
+  .modalActions > :last-child {
+    grid-column: span 1;
   }
 }

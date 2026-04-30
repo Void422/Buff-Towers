@@ -30,7 +30,7 @@ export type TowerSnapshot = {
 
 export function normalizeTribe(value: null | string | undefined) {
   const cleaned = value?.trim();
-  return cleaned ? cleaned : null;
+  return cleaned ? cleaned.toUpperCase() : null;
 }
 
 export function parseServerOrder(server: string) {

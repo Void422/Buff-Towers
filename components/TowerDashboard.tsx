@@ -68,6 +68,8 @@ type Translation = {
   trying: string;
   tribe: string;
   ownerTribe: string;
+  addKnownTribe: (tribe: string) => string;
+  knownTribeSaved: (tribe: string) => string;
   shieldPopsAt: string;
   unixTimestamp: string;
   shield: string;
@@ -133,6 +135,8 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     trying: "Trying",
     tribe: "Tribe",
     ownerTribe: "Owner tribe",
+    addKnownTribe: (tribe) => `Save ${tribe}`,
+    knownTribeSaved: (tribe) => `${tribe} saved to known tribes.`,
     shieldPopsAt: "Shield pops at",
     unixTimestamp: "Unix timestamp",
     shield: "Shield",
@@ -194,6 +198,8 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     trying: "挑戦中",
     tribe: "部族",
     ownerTribe: "所有部族",
+    addKnownTribe: (tribe) => `${tribe} を保存`,
+    knownTribeSaved: (tribe) => `${tribe} を候補に保存しました。`,
     shieldPopsAt: "シールド終了",
     unixTimestamp: "Unix タイムスタンプ",
     shield: "シールド",
@@ -255,6 +261,8 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     trying: "嘗試中",
     tribe: "部落",
     ownerTribe: "持有部落",
+    addKnownTribe: (tribe) => `儲存 ${tribe}`,
+    knownTribeSaved: (tribe) => `${tribe} 已加入已知部落。`,
     shieldPopsAt: "護盾結束時間",
     unixTimestamp: "Unix 時間戳",
     shield: "護盾",
@@ -303,6 +311,7 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
 const LANGUAGE_OPTIONS: LanguageCode[] = ["en", "ja", "zh-Hant"];
 const LANGUAGE_STORAGE_KEY = "buff-towers-language";
 const TIMEZONE_STORAGE_KEY = "buff-towers-timezone";
+const KNOWN_TRIBES_STORAGE_KEY = "buff-towers-known-tribes";
 const FALLBACK_TIMEZONES = [
   "UTC",
   "America/Toronto",
@@ -319,6 +328,7 @@ const TIMEZONE_OPTIONS =
   typeof Intl.supportedValuesOf === "function"
     ? Intl.supportedValuesOf("timeZone")
     : FALLBACK_TIMEZONES;
+const DEFAULT_KNOWN_TRIBES = ["APEX", "APEXX", "ARK", "ARIZE", "GRIM", "RISK"] as const;
 
 const COLOR_META: Record<TowerColor, ColorMeta> = {
   yellow: {
@@ -365,6 +375,48 @@ function detectLanguage(): LanguageCode {
   return "en";
 }
 
+function normalizeTribeInput(value: string) {
+  return value.toUpperCase();
+}
+
+function mergeKnownTribes(...lists: ReadonlyArray<ReadonlyArray<string>>) {
+  const values = new Set<string>();
+
+  for (const list of lists) {
+    for (const entry of list) {
+      const normalized = normalizeTribeInput(entry.trim());
+
+      if (normalized) {
+        values.add(normalized);
+      }
+    }
+  }
+
+  return [...values];
+}
+
+function getTribeSuggestions(value: string, knownTribes: string[]) {
+  const query = normalizeTribeInput(value.trim());
+
+  if (!query) {
+    return [];
+  }
+
+  return [...knownTribes]
+    .filter((tribe) => tribe.includes(query) && tribe !== query)
+    .sort((left, right) => {
+      const leftStarts = left.startsWith(query) ? 0 : 1;
+      const rightStarts = right.startsWith(query) ? 0 : 1;
+
+      if (leftStarts !== rightStarts) {
+        return leftStarts - rightStarts;
+      }
+
+      return left.localeCompare(right);
+    })
+    .slice(0, 6);
+}
+
 function getBrowserTimezone() {
   if (typeof Intl === "undefined") {
     return "UTC";
@@ -396,6 +448,31 @@ function getZonedParts(date: Date, timeZone: string) {
     minute: Number(lookup.minute),
     second: Number(lookup.second),
   };
+}
+
+function getTimeZoneOffsetMinutes(timeZone: string, date: Date) {
+  const parts = getZonedParts(date, timeZone);
+  const zonedUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+
+  return Math.round((zonedUtc - date.getTime()) / 60000);
+}
+
+function formatUtcOffset(offsetMinutes: number) {
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absolute = Math.abs(offsetMinutes);
+  const hours = `${Math.floor(absolute / 60)}`.padStart(2, "0");
+  const minutes = `${absolute % 60}`.padStart(2, "0");
+
+  return `UTC${sign}${hours}:${minutes}`;
+}
+
+function buildTimeZoneOptionLabels(date: Date) {
+  return Object.fromEntries(
+    TIMEZONE_OPTIONS.map((timeZone) => [
+      timeZone,
+      `${formatUtcOffset(getTimeZoneOffsetMinutes(timeZone, date))} · ${timeZone}`,
+    ]),
+  );
 }
 
 function toDatetimeInputValue(unixSeconds: number, timeZone: string) {
@@ -605,10 +682,14 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   const [nowMs, setNowMs] = useState<number | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [selectedTimezone, setSelectedTimezone] = useState("UTC");
+  const [timeZoneOptionLabels, setTimeZoneOptionLabels] = useState<Record<string, string>>({});
+  const [knownTribes, setKnownTribes] = useState<string[]>([...DEFAULT_KNOWN_TRIBES]);
   const [notice, setNotice] = useState<NoticeState>(null);
   const [copiedServer, setCopiedServer] = useState<string | null>(null);
   const [shieldEditor, setShieldEditor] = useState<ShieldEditorState | null>(null);
   const [captureEditor, setCaptureEditor] = useState<CaptureEditorState | null>(null);
+  const [shieldTribeFocused, setShieldTribeFocused] = useState(false);
+  const [captureTribeFocused, setCaptureTribeFocused] = useState(false);
 
   const translation = TRANSLATIONS[selectedLanguage];
 
@@ -619,7 +700,9 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     if (typeof window !== "undefined") {
       const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
       const storedTimezone = window.localStorage.getItem(TIMEZONE_STORAGE_KEY);
+      const storedKnownTribes = window.localStorage.getItem(KNOWN_TRIBES_STORAGE_KEY);
       const browserTimezone = getBrowserTimezone();
+      setTimeZoneOptionLabels(buildTimeZoneOptionLabels(new Date()));
 
       if (storedLanguage && LANGUAGE_OPTIONS.includes(storedLanguage as LanguageCode)) {
         setSelectedLanguage(storedLanguage as LanguageCode);
@@ -633,6 +716,18 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         setSelectedTimezone(browserTimezone);
       } else {
         setSelectedTimezone("UTC");
+      }
+
+      if (storedKnownTribes) {
+        try {
+          const parsed = JSON.parse(storedKnownTribes) as unknown;
+
+          if (Array.isArray(parsed)) {
+            setKnownTribes(mergeKnownTribes(DEFAULT_KNOWN_TRIBES, parsed.filter((item) => typeof item === "string")));
+          }
+        } catch {
+          setKnownTribes([...DEFAULT_KNOWN_TRIBES]);
+        }
       }
     }
 
@@ -672,7 +767,8 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
 
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, selectedLanguage);
     window.localStorage.setItem(TIMEZONE_STORAGE_KEY, selectedTimezone);
-  }, [mounted, selectedLanguage, selectedTimezone]);
+    window.localStorage.setItem(KNOWN_TRIBES_STORAGE_KEY, JSON.stringify(knownTribes));
+  }, [knownTribes, mounted, selectedLanguage, selectedTimezone]);
 
   useEffect(() => {
     if (!shieldEditor) {
@@ -737,6 +833,12 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   const upcomingOrder = new Map(upcomingTowers.map((tower, index) => [tower.server, index + 1]));
   const nextTower = upcomingTowers[0] ?? liveTowers[0] ?? towers[0];
   const lastUpdated = Math.floor(new Date(snapshot.updatedAt).getTime() / 1000);
+  const shieldOwnerSuggestions = shieldEditor ? getTribeSuggestions(shieldEditor.ownerTribe, knownTribes) : [];
+  const captureTribeSuggestions = captureEditor ? getTribeSuggestions(captureEditor.tribe, knownTribes) : [];
+  const shieldOwnerCanBeSaved =
+    !!shieldEditor?.ownerTribe.trim() && !knownTribes.includes(normalizeTribeInput(shieldEditor.ownerTribe.trim()));
+  const captureTribeCanBeSaved =
+    !!captureEditor?.tribe.trim() && !knownTribes.includes(normalizeTribeInput(captureEditor.tribe.trim()));
 
   async function copyDiscordTimestamp(server: string, shieldEndsAt: number) {
     await navigator.clipboard.writeText(`<t:${shieldEndsAt}:F>`);
@@ -744,6 +846,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   }
 
   function openShieldEditor(tower: DisplayTower) {
+    setShieldTribeFocused(false);
     setShieldEditor({
       server: tower.server,
       shieldUnixValue: `${tower.shieldEndsAt}`,
@@ -754,11 +857,52 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   }
 
   function openCaptureEditor(tower: DisplayTower, mode: "claim" | "stole") {
+    setCaptureTribeFocused(false);
     setCaptureEditor({
       server: tower.server,
       tribe: mode === "stole" ? "" : tower.contestingTribe ?? "",
       mode,
       status: "idle",
+    });
+  }
+
+  function setShieldOwnerValue(value: string) {
+    setShieldEditor((current) =>
+      current
+        ? {
+            ...current,
+            ownerTribe: normalizeTribeInput(value),
+            status: "idle",
+            error: undefined,
+          }
+        : current,
+    );
+  }
+
+  function setCaptureTribeValue(value: string) {
+    setCaptureEditor((current) =>
+      current
+        ? {
+            ...current,
+            tribe: normalizeTribeInput(value),
+            status: "idle",
+            error: undefined,
+          }
+        : current,
+    );
+  }
+
+  function saveKnownTribe(value: string) {
+    const tribe = normalizeTribeInput(value.trim());
+
+    if (!tribe) {
+      return;
+    }
+
+    setKnownTribes((current) => mergeKnownTribes(current, [tribe]));
+    setNotice({
+      tone: "success",
+      message: translation.knownTribeSaved(tribe),
     });
   }
 
@@ -971,7 +1115,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
           </label>
 
           <label className={styles.control}>
-            <span>{translation.timezone}</span>
+                <span>{translation.timezone}</span>
             <select
               className={styles.select}
               value={selectedTimezone}
@@ -979,7 +1123,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
             >
               {TIMEZONE_OPTIONS.map((timeZone) => (
                 <option key={timeZone} value={timeZone}>
-                  {timeZone}
+                  {timeZoneOptionLabels[timeZone] ?? timeZone}
                 </option>
               ))}
             </select>
@@ -1135,20 +1279,42 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
               <span>{translation.ownerTribe}</span>
               <input
                 value={shieldEditor.ownerTribe}
-                onChange={(event) =>
-                  setShieldEditor((current) =>
-                    current
-                      ? {
-                          ...current,
-                          ownerTribe: event.target.value,
-                          status: "idle",
-                          error: undefined,
-                        }
-                      : current,
-                  )
-                }
+                onFocus={() => setShieldTribeFocused(true)}
+                onBlur={() => setShieldTribeFocused(false)}
+                onChange={(event) => setShieldOwnerValue(event.target.value)}
               />
             </label>
+
+            {shieldTribeFocused && (shieldOwnerSuggestions.length > 0 || shieldOwnerCanBeSaved) ? (
+              <div className={styles.tribeAssist}>
+                {shieldOwnerSuggestions.length > 0 ? (
+                  <div className={styles.tribeSuggestions}>
+                    {shieldOwnerSuggestions.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={styles.tribeSuggestionButton}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => setShieldOwnerValue(preset)}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {shieldOwnerCanBeSaved ? (
+                  <button
+                    type="button"
+                    className={styles.tribeAddButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => saveKnownTribe(shieldEditor.ownerTribe)}
+                  >
+                    {translation.addKnownTribe(normalizeTribeInput(shieldEditor.ownerTribe.trim()))}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
 
             <label className={styles.field}>
               <span>{translation.shieldPopsAt}</span>
@@ -1216,20 +1382,42 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
               <span>{translation.tribe}</span>
               <input
                 value={captureEditor.tribe}
-                onChange={(event) =>
-                  setCaptureEditor((current) =>
-                    current
-                      ? {
-                          ...current,
-                          tribe: event.target.value,
-                          status: "idle",
-                          error: undefined,
-                        }
-                      : current,
-                  )
-                }
+                onFocus={() => setCaptureTribeFocused(true)}
+                onBlur={() => setCaptureTribeFocused(false)}
+                onChange={(event) => setCaptureTribeValue(event.target.value)}
               />
             </label>
+
+            {captureTribeFocused && (captureTribeSuggestions.length > 0 || captureTribeCanBeSaved) ? (
+              <div className={styles.tribeAssist}>
+                {captureTribeSuggestions.length > 0 ? (
+                  <div className={styles.tribeSuggestions}>
+                    {captureTribeSuggestions.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={styles.tribeSuggestionButton}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => setCaptureTribeValue(preset)}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {captureTribeCanBeSaved ? (
+                  <button
+                    type="button"
+                    className={styles.tribeAddButton}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => saveKnownTribe(captureEditor.tribe)}
+                  >
+                    {translation.addKnownTribe(normalizeTribeInput(captureEditor.tribe.trim()))}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
 
             {captureEditor.error ? <p className={styles.errorText}>{captureEditor.error}</p> : null}
 
