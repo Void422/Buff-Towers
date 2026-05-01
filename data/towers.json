@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-01T00:14:54.000Z",
+  "updatedAt": "2026-05-01T00:15:06.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -49,7 +49,7 @@
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-05-01T00:14:54.000Z"
+      "updatedAt": "2026-05-01T00:15:06.000Z"
     },
     {
       "server": "1-17",
