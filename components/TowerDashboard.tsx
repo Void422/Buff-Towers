@@ -86,7 +86,9 @@ type Translation = {
   startClaim: string;
   stoleTower: string;
   copyTs: string;
+  copyLink: string;
   copied: string;
+  linkCopied: (server: string) => string;
   saveShield: string;
   saveSteal: string;
   saving: string;
@@ -153,7 +155,9 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     startClaim: "Start claim",
     stoleTower: "Stole tower",
     copyTs: "Copy ts",
+    copyLink: "Copy link",
     copied: "Copied",
+    linkCopied: (server) => `${server} link copied.`,
     saveShield: "Save shield",
     saveSteal: "Save steal",
     saving: "Saving...",
@@ -216,7 +220,9 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     startClaim: "占領開始",
     stoleTower: "奪取した",
     copyTs: "時刻コピー",
+    copyLink: "リンクコピー",
     copied: "コピー済み",
+    linkCopied: (server) => `${server} のリンクをコピーしました。`,
     saveShield: "シールド保存",
     saveSteal: "奪取を保存",
     saving: "保存中...",
@@ -279,7 +285,9 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     startClaim: "開始佔領",
     stoleTower: "偷塔",
     copyTs: "複製時間",
+    copyLink: "複製連結",
     copied: "已複製",
+    linkCopied: (server) => `${server} 連結已複製。`,
     saveShield: "儲存護盾",
     saveSteal: "儲存偷塔",
     saving: "儲存中...",
@@ -682,6 +690,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   const [nowMs, setNowMs] = useState<number | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [selectedTimezone, setSelectedTimezone] = useState("UTC");
+  const [selectedTowerServer, setSelectedTowerServer] = useState<string | null>(null);
   const [timeZoneOptionLabels, setTimeZoneOptionLabels] = useState<Record<string, string>>({});
   const [knownTribes, setKnownTribes] = useState<string[]>([...DEFAULT_KNOWN_TRIBES]);
   const [notice, setNotice] = useState<NoticeState>(null);
@@ -702,6 +711,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       const storedTimezone = window.localStorage.getItem(TIMEZONE_STORAGE_KEY);
       const storedKnownTribes = window.localStorage.getItem(KNOWN_TRIBES_STORAGE_KEY);
       const browserTimezone = getBrowserTimezone();
+      const query = new URLSearchParams(window.location.search);
       setTimeZoneOptionLabels(buildTimeZoneOptionLabels(new Date()));
 
       if (storedLanguage && LANGUAGE_OPTIONS.includes(storedLanguage as LanguageCode)) {
@@ -728,6 +738,12 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         } catch {
           setKnownTribes([...DEFAULT_KNOWN_TRIBES]);
         }
+      }
+
+      const queryTower = query.get("tower");
+
+      if (queryTower && /^1-\d+$/.test(queryTower)) {
+        setSelectedTowerServer(queryTower);
       }
     }
 
@@ -808,6 +824,21 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     };
   }, [copiedServer, notice]);
 
+  useEffect(() => {
+    if (!selectedTowerServer || typeof document === "undefined") {
+      return;
+    }
+
+    const target = document.getElementById(`tower-${selectedTowerServer}`);
+
+    if (target) {
+      target.scrollIntoView({
+        behavior: mounted ? "smooth" : "auto",
+        block: "center",
+      });
+    }
+  }, [mounted, selectedTowerServer]);
+
   const currentSeconds =
     nowMs === null ? Math.floor(new Date(snapshot.updatedAt).getTime() / 1000) : Math.floor(nowMs / 1000);
   const towers = snapshot.towers.map((tower) => getDisplayTower(tower, currentSeconds));
@@ -845,7 +876,23 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     setCopiedServer(server);
   }
 
+  async function copyTowerLink(server: string) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("tower", server);
+    await navigator.clipboard.writeText(url.toString());
+    setSelectedTowerServer(server);
+    setNotice({
+      tone: "success",
+      message: translation.linkCopied(server),
+    });
+  }
+
   function openShieldEditor(tower: DisplayTower) {
+    setSelectedTowerServer(tower.server);
     setShieldTribeFocused(false);
     setShieldEditor({
       server: tower.server,
@@ -857,6 +904,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   }
 
   function openCaptureEditor(tower: DisplayTower, mode: "claim" | "stole") {
+    setSelectedTowerServer(tower.server);
     setCaptureTribeFocused(false);
     setCaptureEditor({
       server: tower.server,
@@ -1164,9 +1212,10 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         {timelineTowers.map((tower) => {
           const meta = COLOR_META[tower.color];
           const order = upcomingOrder.get(tower.server);
+          const isFocused = selectedTowerServer === tower.server;
 
           return (
-            <article key={tower.server} className={styles.timelineItem}>
+            <article key={tower.server} className={styles.timelineItem} id={`tower-${tower.server}`}>
               <div className={styles.nodeColumn}>
                 <div
                   className={`${styles.node} ${tower.phase === "capturing" ? styles.nodeHot : tower.phase === "open" ? styles.nodeLive : styles.nodeFuture}`}
@@ -1176,7 +1225,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
               </div>
 
               <div
-                className={styles.eventCard}
+                className={`${styles.eventCard} ${isFocused ? styles.eventCardFocused : ""}`}
                 style={
                   {
                     "--accent": meta.accent,
@@ -1250,6 +1299,10 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
 
                   <button className={styles.ghostButton} onClick={() => void copyDiscordTimestamp(tower.server, tower.shieldEndsAt)}>
                     {copiedServer === tower.server ? translation.copied : translation.copyTs}
+                  </button>
+
+                  <button className={styles.ghostButton} onClick={() => void copyTowerLink(tower.server)}>
+                    {translation.copyLink}
                   </button>
                 </div>
               </div>
