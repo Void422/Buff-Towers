@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-01T16:19:21.000Z",
+  "updatedAt": "2026-05-01T16:19:48.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -44,12 +44,12 @@
     {
       "server": "1-14",
       "color": "green",
-      "shieldEndsAt": 1777823280,
+      "shieldEndsAt": 1777826880,
       "ownerTribe": "ARIZE",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-05-01T16:19:21.000Z"
+      "updatedAt": "2026-05-01T16:19:48.000Z"
     },
     {
       "server": "1-17",
