@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-02T16:03:06.000Z",
+  "updatedAt": "2026-05-02T16:03:52.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -55,11 +55,11 @@
       "server": "1-17",
       "color": "blue",
       "shieldEndsAt": 1777740180,
-      "ownerTribe": "ARK",
+      "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T23:37:38.639Z"
+      "updatedAt": "2026-05-02T16:03:52.000Z"
     },
     {
       "server": "1-18",
