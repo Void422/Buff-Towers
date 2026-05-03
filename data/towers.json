@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-03T21:38:09.000Z",
+  "updatedAt": "2026-05-03T21:41:58.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -41,9 +41,9 @@
       "ownerTribe": "ARK",
       "contestingTribe": "APEX",
       "captureStartedAt": 1777844229,
-      "captureMarker": null,
+      "captureMarker": "help",
       "lastEvent": "claim-started",
-      "updatedAt": "2026-05-03T21:38:09.000Z"
+      "updatedAt": "2026-05-03T21:41:58.000Z"
     },
     {
       "server": "1-14",
