@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-03T22:25:24.000Z",
+  "updatedAt": "2026-05-03T22:25:28.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -43,7 +43,7 @@
       "captureStartedAt": 1777844705,
       "captureMarker": "help",
       "lastEvent": "tower-stolen",
-      "updatedAt": "2026-05-03T22:25:24.000Z"
+      "updatedAt": "2026-05-03T22:25:28.000Z"
     },
     {
       "server": "1-14",
