@@ -202,6 +202,13 @@
     rgba(28, 40, 61, 0.94);
 }
 
+.eventCardFocused {
+  border-color: color-mix(in srgb, var(--accent) 70%, white);
+  box-shadow:
+    0 16px 40px rgba(3, 8, 18, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
 .eventTop {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px;
@@ -544,5 +551,220 @@
   .modalActions > :first-child,
   .modalActions > :last-child {
     grid-column: span 1;
+  }
+}
+
+.heroHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.sharePanel {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: 4px 0 18px 64px;
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(28, 40, 61, 0.78);
+  border: 1px solid rgba(116, 136, 168, 0.22);
+  box-shadow: 0 16px 40px rgba(3, 8, 18, 0.2);
+  backdrop-filter: blur(14px);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 46px;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(132, 150, 181, 0.24);
+  background: rgba(12, 21, 36, 0.92);
+  color: #f7fbff;
+  font: inherit;
+}
+
+.textarea:focus {
+  outline: 2px solid rgba(43, 140, 255, 0.22);
+  border-color: rgba(43, 140, 255, 0.55);
+}
+
+.markerBadge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #f7fbff;
+  background: color-mix(in srgb, var(--accent) 32%, rgba(255, 255, 255, 0.06));
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shareNote {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  color: #dbe7f8;
+  line-height: 1.45;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(116, 136, 168, 0.18);
+  white-space: pre-wrap;
+}
+
+.timelineSingle::before {
+  display: none;
+}
+
+.timelineSingle .timelineItem {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.timelineSingle .nodeColumn {
+  display: none;
+}
+
+.eventCard,
+.summaryCard,
+.notice,
+.modal,
+.sharePanel {
+  animation: cardIn 260ms ease both;
+}
+
+.eventArt {
+  transition: transform 220ms ease;
+}
+
+.eventCard:hover .eventArt {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.primaryButton,
+.secondaryButton,
+.ghostButton,
+.quickButton,
+.closeButton,
+.select,
+.field input,
+.textarea {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease,
+    opacity 150ms ease;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.ghostButton:hover,
+.quickButton:hover,
+.closeButton:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eventCard,
+  .summaryCard,
+  .notice,
+  .modal,
+  .sharePanel {
+    animation: none;
+  }
+
+  .eventArt,
+  .primaryButton,
+  .secondaryButton,
+  .ghostButton,
+  .quickButton,
+  .closeButton,
+  .select,
+  .field input,
+  .textarea {
+    transition: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .sharePanel {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .heroHeading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sharePanel {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .timelineSingle .eventCard {
+    padding: 14px;
+  }
+}
+
+.markerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.markerButton {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(132, 150, 181, 0.24);
+  background: rgba(255, 255, 255, 0.045);
+  color: #dbe7f8;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.markerButton:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.markerButtonActive {
+  color: #f7fbff;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  background: color-mix(in srgb, var(--accent) 25%, rgba(255, 255, 255, 0.05));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markerButton {
+    transition: none;
+  }
+
+  .markerButton:hover {
+    transform: none;
   }
 }

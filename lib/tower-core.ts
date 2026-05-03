@@ -5,6 +5,8 @@ export type TowerColor = "yellow" | "green" | "blue";
 
 export type TowerPhase = "shielded" | "open" | "capturing";
 
+export type TowerCaptureMarker = "help" | "attacking";
+
 export type TowerEventType =
   | "seed"
   | "shield-set"
@@ -19,6 +21,7 @@ export type TowerRecord = {
   ownerTribe: string | null;
   contestingTribe: string | null;
   captureStartedAt: number | null;
+  captureMarker?: TowerCaptureMarker | null;
   lastEvent: TowerEventType;
   updatedAt: string;
 };
@@ -27,6 +30,10 @@ export type TowerSnapshot = {
   updatedAt: string;
   towers: TowerRecord[];
 };
+
+export function normalizeCaptureMarker(value: null | string | undefined): TowerCaptureMarker | null {
+  return value === "help" || value === "attacking" ? value : null;
+}
 
 export function normalizeTribe(value: null | string | undefined) {
   const cleaned = value?.trim();
@@ -55,6 +62,7 @@ export function normalizeTower(tower: TowerRecord): TowerRecord {
       tower.captureStartedAt === null || tower.captureStartedAt === undefined
         ? null
         : Math.trunc(tower.captureStartedAt),
+    captureMarker: normalizeCaptureMarker(tower.captureMarker),
     lastEvent: tower.lastEvent ?? "seed",
     updatedAt: new Date(tower.updatedAt).toISOString(),
   };
@@ -101,6 +109,7 @@ export function resolveTowerState(
       ownerTribe: normalizeTribe(normalized.contestingTribe) ?? normalized.ownerTribe,
       contestingTribe: null,
       captureStartedAt: null,
+      captureMarker: null,
       lastEvent: "capture-complete",
       updatedAt: new Date(nowSeconds * 1000).toISOString(),
     },

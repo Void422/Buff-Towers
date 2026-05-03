@@ -2,9 +2,11 @@ import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
 import path from "node:path";
 import {
+  normalizeCaptureMarker,
   normalizeSnapshot,
   normalizeTribe,
   resolveSnapshot,
+  type TowerCaptureMarker,
   type TowerEventType,
   type TowerRecord,
   type TowerSnapshot,
@@ -314,6 +316,7 @@ export async function setShieldEnd(server: string, shieldEndsAt: number, ownerTr
     tower.shieldEndsAt = Math.trunc(shieldEndsAt);
     tower.contestingTribe = null;
     tower.captureStartedAt = null;
+    tower.captureMarker = null;
     tower.lastEvent = "shield-set";
     tower.updatedAt = new Date(nowSeconds * 1000).toISOString();
 
@@ -327,6 +330,7 @@ export async function startCapture(
   server: string,
   tribe: string,
   eventType: Extract<TowerEventType, "claim-started" | "tower-stolen">,
+  captureEndsAt?: number,
 ) {
   const normalizedTribe = normalizeTribe(tribe);
 
@@ -339,9 +343,29 @@ export async function startCapture(
       throw new Error("Tower is still shielded.");
     }
 
+    const normalizedCaptureEndsAt =
+      typeof captureEndsAt === "number" && Number.isInteger(captureEndsAt) && captureEndsAt > nowSeconds
+        ? Math.min(captureEndsAt, nowSeconds + 60 * 60)
+        : nowSeconds + 60 * 60;
+
     tower.contestingTribe = normalizedTribe;
-    tower.captureStartedAt = nowSeconds;
+    tower.captureStartedAt = normalizedCaptureEndsAt - 60 * 60;
+    tower.captureMarker = null;
     tower.lastEvent = eventType;
+    tower.updatedAt = new Date(nowSeconds * 1000).toISOString();
+  });
+}
+
+
+export async function setCaptureMarker(server: string, marker: TowerCaptureMarker | null) {
+  const normalizedMarker = normalizeCaptureMarker(marker);
+
+  return saveTowerChange(server, (tower, nowSeconds) => {
+    if (tower.captureStartedAt === null || tower.captureStartedAt + 60 * 60 <= nowSeconds) {
+      throw new Error("Markers can only be set on towers in progress.");
+    }
+
+    tower.captureMarker = normalizedMarker;
     tower.updatedAt = new Date(nowSeconds * 1000).toISOString();
   });
 }

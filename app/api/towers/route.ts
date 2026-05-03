@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getTowerSnapshot, setShieldEnd, startCapture } from "@/lib/tower-store";
+import { getTowerSnapshot, setCaptureMarker, setShieldEnd, startCapture } from "@/lib/tower-store";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +58,27 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: "A valid capture mode is required." }, { status: 400 });
       }
 
-      snapshot = await startCapture(server, tribe, mode === "stole" ? "tower-stolen" : "claim-started");
+      const captureEndsAt =
+        typeof body === "object" && body && "captureEndsAt" in body ? Number(body.captureEndsAt) : undefined;
+
+      if (captureEndsAt !== undefined && (!Number.isInteger(captureEndsAt) || captureEndsAt < 1)) {
+        return NextResponse.json({ error: "A valid capture end Unix timestamp is required." }, { status: 400 });
+      }
+
+      snapshot = await startCapture(
+        server,
+        tribe,
+        mode === "stole" ? "tower-stolen" : "claim-started",
+        captureEndsAt,
+      );
+    } else if (action === "set-capture-marker") {
+      const rawMarker = typeof body === "object" && body && "marker" in body ? String(body.marker) : "";
+
+      if (rawMarker !== "" && rawMarker !== "help" && rawMarker !== "attacking") {
+        return NextResponse.json({ error: "A valid marker is required." }, { status: 400 });
+      }
+
+      snapshot = await setCaptureMarker(server, rawMarker === "" ? null : rawMarker);
     } else {
       return NextResponse.json({ error: "Unknown update action." }, { status: 400 });
     }

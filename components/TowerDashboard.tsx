@@ -8,6 +8,7 @@ import {
   getTowerPhase,
   parseServerOrder,
   resolveTowerState,
+  type TowerCaptureMarker,
   type TowerColor,
   type TowerPhase,
   type TowerRecord,
@@ -18,6 +19,7 @@ import styles from "./TowerDashboard.module.css";
 type LanguageCode = "en" | "ja" | "zh-Hant";
 type TimerKey = "shield" | "claim" | "live";
 type StatusKey = "shielded" | "capturing" | "live";
+type ShareMarker = "none" | "going" | "attacked" | "help";
 
 type ShieldEditorState = {
   server: string;
@@ -32,6 +34,7 @@ type CaptureEditorState = {
   server: string;
   tribe: string;
   mode: "claim" | "stole";
+  remainingMinutesValue: string;
   status: "idle" | "saving" | "error";
   error?: string;
 };
@@ -86,7 +89,20 @@ type Translation = {
   startClaim: string;
   stoleTower: string;
   copyTs: string;
+  copyLink: string;
   copied: string;
+  occupationTimeLeft: string;
+  shareViewTitle: string;
+  sharedTower: string;
+  backToAllTowers: string;
+  copyShareLink: string;
+  note: string;
+  marker: string;
+  markerOptions: Record<ShareMarker, string>;
+  captureMarkerOptions: Record<TowerCaptureMarker, string>;
+  clearMarker: string;
+  markerUpdated: (server: string) => string;
+  linkCopied: (server: string) => string;
   saveShield: string;
   saveSteal: string;
   saving: string;
@@ -153,7 +169,28 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     startClaim: "Start claim",
     stoleTower: "Stole tower",
     copyTs: "Copy ts",
+    copyLink: "Copy link",
     copied: "Copied",
+    occupationTimeLeft: "Occupation time left",
+    shareViewTitle: "Tower ping",
+    sharedTower: "Shared tower",
+    backToAllTowers: "All towers",
+    copyShareLink: "Copy ping link",
+    note: "Note",
+    marker: "Marker",
+    markerOptions: {
+      none: "No marker",
+      going: "We are going",
+      attacked: "Getting attacked",
+      help: "Need help",
+    },
+    captureMarkerOptions: {
+      help: "Help",
+      attacking: "Attacking",
+    },
+    clearMarker: "Clear marker",
+    markerUpdated: (server) => `${server} marker updated.`,
+    linkCopied: (server) => `${server} link copied.`,
     saveShield: "Save shield",
     saveSteal: "Save steal",
     saving: "Saving...",
@@ -216,7 +253,28 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     startClaim: "占領開始",
     stoleTower: "奪取した",
     copyTs: "時刻コピー",
+    copyLink: "リンクコピー",
     copied: "コピー済み",
+    occupationTimeLeft: "占領残り時間",
+    shareViewTitle: "タワーピン",
+    sharedTower: "共有タワー",
+    backToAllTowers: "全タワー",
+    copyShareLink: "ピンリンクコピー",
+    note: "メモ",
+    marker: "マーカー",
+    markerOptions: {
+      none: "マーカーなし",
+      going: "向かいます",
+      attacked: "攻撃されています",
+      help: "ヘルプ必要",
+    },
+    captureMarkerOptions: {
+      help: "ヘルプ",
+      attacking: "攻撃中",
+    },
+    clearMarker: "マーカー解除",
+    markerUpdated: (server) => `${server} のマーカーを更新しました。`,
+    linkCopied: (server) => `${server} のリンクをコピーしました。`,
     saveShield: "シールド保存",
     saveSteal: "奪取を保存",
     saving: "保存中...",
@@ -279,7 +337,28 @@ const TRANSLATIONS: Record<LanguageCode, Translation> = {
     startClaim: "開始佔領",
     stoleTower: "偷塔",
     copyTs: "複製時間",
+    copyLink: "複製連結",
     copied: "已複製",
+    occupationTimeLeft: "佔領剩餘時間",
+    shareViewTitle: "塔標記",
+    sharedTower: "分享塔",
+    backToAllTowers: "全部塔",
+    copyShareLink: "複製標記連結",
+    note: "備註",
+    marker: "標記",
+    markerOptions: {
+      none: "無標記",
+      going: "我們要去",
+      attacked: "正在被攻擊",
+      help: "需要支援",
+    },
+    captureMarkerOptions: {
+      help: "支援",
+      attacking: "攻擊中",
+    },
+    clearMarker: "清除標記",
+    markerUpdated: (server) => `${server} 標記已更新。`,
+    linkCopied: (server) => `${server} 連結已複製。`,
     saveShield: "儲存護盾",
     saveSteal: "儲存偷塔",
     saving: "儲存中...",
@@ -329,6 +408,8 @@ const TIMEZONE_OPTIONS =
     ? Intl.supportedValuesOf("timeZone")
     : FALLBACK_TIMEZONES;
 const DEFAULT_KNOWN_TRIBES = ["APEX", "APEXX", "ARK", "ARIZE", "GRIM", "RISK"] as const;
+const SHARE_MARKERS: ShareMarker[] = ["none", "going", "attacked", "help"];
+const CAPTURE_MARKERS: TowerCaptureMarker[] = ["help", "attacking"];
 
 const COLOR_META: Record<TowerColor, ColorMeta> = {
   yellow: {
@@ -664,6 +745,10 @@ function getTimelineLabel(tower: DisplayTower, upcomingOrder: number | undefined
   return translation.upcoming(upcomingOrder ?? 0);
 }
 
+function getShareMarker(value: string | null): ShareMarker {
+  return value === "going" || value === "attacked" || value === "help" ? value : "none";
+}
+
 function getTimelineNodeText(tower: DisplayTower, upcomingOrder: number | undefined) {
   if (tower.phase === "capturing") {
     return "!";
@@ -682,6 +767,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   const [nowMs, setNowMs] = useState<number | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("en");
   const [selectedTimezone, setSelectedTimezone] = useState("UTC");
+  const [selectedTowerServer, setSelectedTowerServer] = useState<string | null>(null);
   const [timeZoneOptionLabels, setTimeZoneOptionLabels] = useState<Record<string, string>>({});
   const [knownTribes, setKnownTribes] = useState<string[]>([...DEFAULT_KNOWN_TRIBES]);
   const [notice, setNotice] = useState<NoticeState>(null);
@@ -690,6 +776,9 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   const [captureEditor, setCaptureEditor] = useState<CaptureEditorState | null>(null);
   const [shieldTribeFocused, setShieldTribeFocused] = useState(false);
   const [captureTribeFocused, setCaptureTribeFocused] = useState(false);
+  const [isShareView, setIsShareView] = useState(false);
+  const [shareNote, setShareNote] = useState("");
+  const [shareMarker, setShareMarker] = useState<ShareMarker>("none");
 
   const translation = TRANSLATIONS[selectedLanguage];
 
@@ -702,6 +791,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       const storedTimezone = window.localStorage.getItem(TIMEZONE_STORAGE_KEY);
       const storedKnownTribes = window.localStorage.getItem(KNOWN_TRIBES_STORAGE_KEY);
       const browserTimezone = getBrowserTimezone();
+      const query = new URLSearchParams(window.location.search);
       setTimeZoneOptionLabels(buildTimeZoneOptionLabels(new Date()));
 
       if (storedLanguage && LANGUAGE_OPTIONS.includes(storedLanguage as LanguageCode)) {
@@ -728,6 +818,16 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         } catch {
           setKnownTribes([...DEFAULT_KNOWN_TRIBES]);
         }
+      }
+
+      const queryTower = query.get("tower");
+      const queryView = query.get("view");
+
+      if (queryTower && /^1-\d+$/.test(queryTower)) {
+        setSelectedTowerServer(queryTower);
+        setIsShareView(false);
+        setShareMarker(getShareMarker(query.get("marker")));
+        setShareNote(query.get("note") ?? "");
       }
     }
 
@@ -808,6 +908,21 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     };
   }, [copiedServer, notice]);
 
+  useEffect(() => {
+    if (!selectedTowerServer || typeof document === "undefined") {
+      return;
+    }
+
+    const target = document.getElementById(`tower-${selectedTowerServer}`);
+
+    if (target) {
+      target.scrollIntoView({
+        behavior: mounted ? "smooth" : "auto",
+        block: "center",
+      });
+    }
+  }, [mounted, selectedTowerServer]);
+
   const currentSeconds =
     nowMs === null ? Math.floor(new Date(snapshot.updatedAt).getTime() / 1000) : Math.floor(nowMs / 1000);
   const towers = snapshot.towers.map((tower) => getDisplayTower(tower, currentSeconds));
@@ -831,7 +946,9 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     .sort((left, right) => left.shieldEndsAt - right.shieldEndsAt);
   const timelineTowers = [...liveTowers, ...upcomingTowers];
   const upcomingOrder = new Map(upcomingTowers.map((tower, index) => [tower.server, index + 1]));
-  const nextTower = upcomingTowers[0] ?? liveTowers[0] ?? towers[0];
+  const focusedTower = selectedTowerServer ? towers.find((tower) => tower.server === selectedTowerServer) ?? null : null;
+  const visibleTowers = isShareView && focusedTower ? [focusedTower] : timelineTowers;
+  const nextTower = focusedTower && isShareView ? focusedTower : upcomingTowers[0] ?? liveTowers[0] ?? towers[0];
   const lastUpdated = Math.floor(new Date(snapshot.updatedAt).getTime() / 1000);
   const shieldOwnerSuggestions = shieldEditor ? getTribeSuggestions(shieldEditor.ownerTribe, knownTribes) : [];
   const captureTribeSuggestions = captureEditor ? getTribeSuggestions(captureEditor.tribe, knownTribes) : [];
@@ -845,7 +962,68 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     setCopiedServer(server);
   }
 
+  function buildTowerShareUrl(server: string, options?: { note?: string; marker?: ShareMarker }) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tower", server);
+    url.searchParams.delete("view");
+
+    const marker = options?.marker ?? "none";
+    const note = options?.note?.trim() ?? "";
+
+    if (marker === "none") {
+      url.searchParams.delete("marker");
+    } else {
+      url.searchParams.set("marker", marker);
+    }
+
+    if (note) {
+      url.searchParams.set("note", note);
+    } else {
+      url.searchParams.delete("note");
+    }
+
+    return url.toString();
+  }
+
+  async function copyTowerLink(server: string) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    await navigator.clipboard.writeText(buildTowerShareUrl(server));
+    setSelectedTowerServer(server);
+    setNotice({
+      tone: "success",
+      message: translation.linkCopied(server),
+    });
+  }
+
+  async function copyShareLink() {
+    if (typeof window === "undefined" || !focusedTower) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(buildTowerShareUrl(focusedTower.server, { note: shareNote, marker: shareMarker }));
+    setNotice({
+      tone: "success",
+      message: translation.linkCopied(focusedTower.server),
+    });
+  }
+
+  function showAllTowers() {
+    setIsShareView(false);
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("view");
+      url.searchParams.delete("note");
+      url.searchParams.delete("marker");
+      window.history.replaceState(null, "", url.toString());
+    }
+  }
+
   function openShieldEditor(tower: DisplayTower) {
+    setSelectedTowerServer(tower.server);
     setShieldTribeFocused(false);
     setShieldEditor({
       server: tower.server,
@@ -857,11 +1035,13 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
   }
 
   function openCaptureEditor(tower: DisplayTower, mode: "claim" | "stole") {
+    setSelectedTowerServer(tower.server);
     setCaptureTribeFocused(false);
     setCaptureEditor({
       server: tower.server,
       tribe: mode === "stole" ? "" : tower.contestingTribe ?? "",
       mode,
+      remainingMinutesValue: `${Math.max(1, Math.ceil(((tower.captureEndsAt ?? currentSeconds + CAPTURE_DURATION_SECONDS) - currentSeconds) / 60))}`,
       status: "idle",
     });
   }
@@ -1028,6 +1208,19 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
     }
   }
 
+  function setCaptureRemainingMinutes(value: string) {
+    setCaptureEditor((current) =>
+      current
+        ? {
+            ...current,
+            remainingMinutesValue: value,
+            status: "idle",
+            error: undefined,
+          }
+        : current,
+    );
+  }
+
   async function saveCapture() {
     if (!captureEditor) {
       return;
@@ -1042,8 +1235,20 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       return;
     }
 
+    const remainingMinutes = Math.min(60, Math.max(1, Number(captureEditor.remainingMinutesValue)));
+
+    if (!Number.isFinite(remainingMinutes)) {
+      setCaptureEditor({
+        ...captureEditor,
+        status: "error",
+        error: translation.invalidShieldTimestamp,
+      });
+      return;
+    }
+
     setCaptureEditor({
       ...captureEditor,
+      remainingMinutesValue: `${remainingMinutes}`,
       status: "saving",
       error: undefined,
     });
@@ -1059,6 +1264,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
           server: captureEditor.server,
           tribe: captureEditor.tribe,
           mode: captureEditor.mode,
+          captureEndsAt: currentSeconds + Math.round(remainingMinutes * 60),
         }),
       });
 
@@ -1090,6 +1296,42 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
             }
           : current,
       );
+    }
+  }
+
+  async function updateCaptureMarker(server: string, marker: TowerCaptureMarker | null) {
+    try {
+      const response = await fetch("/api/towers", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "set-capture-marker",
+          server,
+          marker: marker ?? "",
+        }),
+      });
+
+      const nextSnapshot = (await response.json()) as TowerSnapshot & { error?: string };
+
+      if (!response.ok) {
+        throw new Error(nextSnapshot.error || "Could not update that marker.");
+      }
+
+      startTransition(() => {
+        setSnapshot(nextSnapshot);
+      });
+
+      setNotice({
+        tone: "success",
+        message: translation.markerUpdated(server),
+      });
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Could not update that marker.",
+      });
     }
   }
 
@@ -1132,11 +1374,18 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
       </header>
 
       <section className={styles.hero}>
-        <h1 className={styles.heroTitle}>{translation.heroTitle}</h1>
+        <div className={styles.heroHeading}>
+          <h1 className={styles.heroTitle}>{isShareView ? translation.shareViewTitle : translation.heroTitle}</h1>
+          {isShareView ? (
+            <button className={styles.ghostButton} onClick={showAllTowers}>
+              {translation.backToAllTowers}
+            </button>
+          ) : null}
+        </div>
 
         <div className={styles.summaryRow}>
           <div className={styles.summaryCard}>
-            <span>{translation.nextTower}</span>
+            <span>{isShareView ? translation.sharedTower : translation.nextTower}</span>
             <strong>{nextTower.server}</strong>
           </div>
           <div className={styles.summaryCard}>
@@ -1160,13 +1409,43 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
         </div>
       ) : null}
 
-      <section className={styles.timeline}>
-        {timelineTowers.map((tower) => {
+      {isShareView && focusedTower ? (
+        <section className={styles.sharePanel}>
+          <label className={styles.field}>
+            <span>{translation.marker}</span>
+            <select className={styles.select} value={shareMarker} onChange={(event) => setShareMarker(event.target.value as ShareMarker)}>
+              {SHARE_MARKERS.map((marker) => (
+                <option key={marker} value={marker}>
+                  {translation.markerOptions[marker]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span>{translation.note}</span>
+            <textarea
+              className={styles.textarea}
+              value={shareNote}
+              onChange={(event) => setShareNote(event.target.value)}
+              placeholder="Meet here, attack timing, scout notes..."
+            />
+          </label>
+
+          <button className={styles.primaryButton} onClick={() => void copyShareLink()}>
+            {translation.copyShareLink}
+          </button>
+        </section>
+      ) : null}
+
+      <section className={`${styles.timeline} ${isShareView ? styles.timelineSingle : ""}`}>
+        {visibleTowers.map((tower) => {
           const meta = COLOR_META[tower.color];
           const order = upcomingOrder.get(tower.server);
+          const isFocused = selectedTowerServer === tower.server;
 
           return (
-            <article key={tower.server} className={styles.timelineItem}>
+            <article key={tower.server} className={styles.timelineItem} id={`tower-${tower.server}`}>
               <div className={styles.nodeColumn}>
                 <div
                   className={`${styles.node} ${tower.phase === "capturing" ? styles.nodeHot : tower.phase === "open" ? styles.nodeLive : styles.nodeFuture}`}
@@ -1176,7 +1455,7 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
               </div>
 
               <div
-                className={styles.eventCard}
+                className={`${styles.eventCard} ${isFocused ? styles.eventCardFocused : ""}`}
                 style={
                   {
                     "--accent": meta.accent,
@@ -1187,6 +1466,12 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
                 <div className={styles.eventTop}>
                   <div className={styles.eventText}>
                     <span className={styles.eventLabel}>{getTimelineLabel(tower, order, translation)}</span>
+                    {isShareView && shareMarker !== "none" ? (
+                      <span className={styles.markerBadge}>{translation.markerOptions[shareMarker]}</span>
+                    ) : null}
+                    {tower.phase === "capturing" && tower.captureMarker ? (
+                      <span className={styles.markerBadge}>{translation.captureMarkerOptions[tower.captureMarker]}</span>
+                    ) : null}
                     <h2 className={styles.eventTitle}>
                       {tower.server} · {translation.buffLabels[tower.color]}
                     </h2>
@@ -1227,6 +1512,27 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
                   </div>
                 ) : null}
 
+                {isShareView && shareNote.trim() ? <p className={styles.shareNote}>{shareNote}</p> : null}
+
+                {tower.phase === "capturing" ? (
+                  <div className={styles.markerActions}>
+                    {CAPTURE_MARKERS.map((marker) => (
+                      <button
+                        key={marker}
+                        className={`${styles.markerButton} ${tower.captureMarker === marker ? styles.markerButtonActive : ""}`}
+                        onClick={() => void updateCaptureMarker(tower.server, tower.captureMarker === marker ? null : marker)}
+                      >
+                        {translation.captureMarkerOptions[marker]}
+                      </button>
+                    ))}
+                    {tower.captureMarker ? (
+                      <button className={styles.markerButton} onClick={() => void updateCaptureMarker(tower.server, null)}>
+                        {translation.clearMarker}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className={styles.actions}>
                   {tower.phase === "capturing" ? (
                     <button className={styles.primaryButton} onClick={() => openCaptureEditor(tower, "stole")}>
@@ -1250,6 +1556,10 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
 
                   <button className={styles.ghostButton} onClick={() => void copyDiscordTimestamp(tower.server, tower.shieldEndsAt)}>
                     {copiedServer === tower.server ? translation.copied : translation.copyTs}
+                  </button>
+
+                  <button className={styles.ghostButton} onClick={() => void copyTowerLink(tower.server)}>
+                    {translation.copyLink}
                   </button>
                 </div>
               </div>
@@ -1418,6 +1728,26 @@ export function TowerDashboard({ initialSnapshot }: { initialSnapshot: TowerSnap
                 ) : null}
               </div>
             ) : null}
+
+            <label className={styles.field}>
+              <span>{translation.occupationTimeLeft}</span>
+              <input
+                type="number"
+                min="1"
+                max="60"
+                step="1"
+                value={captureEditor.remainingMinutesValue}
+                onChange={(event) => setCaptureRemainingMinutes(event.target.value)}
+              />
+            </label>
+
+            <div className={styles.quickActions}>
+              {[15, 30, 45, 60].map((minutes) => (
+                <button key={minutes} className={styles.quickButton} onClick={() => setCaptureRemainingMinutes(`${minutes}`)}>
+                  {minutes}m
+                </button>
+              ))}
+            </div>
 
             {captureEditor.error ? <p className={styles.errorText}>{captureEditor.error}</p> : null}
 
