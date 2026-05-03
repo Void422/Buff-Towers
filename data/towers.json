@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-03T18:19:28.000Z",
+  "updatedAt": "2026-05-03T18:43:31.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -8,6 +8,7 @@
       "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "capture-complete",
       "updatedAt": "2026-05-02T00:10:56.000Z"
     },
@@ -18,6 +19,7 @@
       "ownerTribe": "APEXX",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "shield-set",
       "updatedAt": "2026-05-02T23:23:02.000Z"
     },
@@ -28,6 +30,7 @@
       "ownerTribe": "ARK",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "shield-set",
       "updatedAt": "2026-05-03T18:19:28.000Z"
     },
@@ -38,6 +41,7 @@
       "ownerTribe": "ARK",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "shield-set",
       "updatedAt": "2026-05-01T21:26:40.000Z"
     },
@@ -47,9 +51,10 @@
       "shieldEndsAt": 1777829460,
       "ownerTribe": "ARK",
       "contestingTribe": "APEX",
-      "captureStartedAt": 1777830464,
-      "lastEvent": "claim-started",
-      "updatedAt": "2026-05-03T17:47:44.000Z"
+      "captureStartedAt": 1777830271,
+      "captureMarker": null,
+      "lastEvent": "tower-stolen",
+      "updatedAt": "2026-05-03T18:43:31.000Z"
     },
     {
       "server": "1-17",
@@ -58,6 +63,7 @@
       "ownerTribe": "ARK",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "shield-set",
       "updatedAt": "2026-05-02T23:24:05.000Z"
     },
@@ -68,6 +74,7 @@
       "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "shield-set",
       "updatedAt": "2026-05-02T16:03:06.000Z"
     },
@@ -78,6 +85,7 @@
       "ownerTribe": "RISK",
       "contestingTribe": null,
       "captureStartedAt": null,
+      "captureMarker": null,
       "lastEvent": "shield-set",
       "updatedAt": "2026-05-02T02:14:37.000Z"
     }
