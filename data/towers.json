@@ -1,85 +1,85 @@
 {
-  "updatedAt": "2026-04-30T23:37:38.639Z",
+  "updatedAt": "2026-05-03T17:47:44.000Z",
   "towers": [
     {
       "server": "1-7",
       "color": "yellow",
-      "shieldEndsAt": 1777676937,
-      "ownerTribe": "ARK",
+      "shieldEndsAt": 1777853440,
+      "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
-      "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:33:08.000Z"
+      "lastEvent": "capture-complete",
+      "updatedAt": "2026-05-02T00:10:56.000Z"
     },
     {
       "server": "1-8",
       "color": "yellow",
-      "shieldEndsAt": 1777740392,
-      "ownerTribe": "GRIM",
+      "shieldEndsAt": 1777916820,
+      "ownerTribe": "APEXX",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T23:37:38.639Z"
+      "updatedAt": "2026-05-02T23:23:02.000Z"
     },
     {
       "server": "1-9",
       "color": "yellow",
-      "shieldEndsAt": 1777659187,
-      "ownerTribe": "Apex",
-      "contestingTribe": null,
-      "captureStartedAt": null,
-      "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:33:35.000Z"
-    },
-    {
-      "server": "1-12",
-      "color": "green",
-      "shieldEndsAt": 1777667726,
-      "ownerTribe": "ARK",
-      "contestingTribe": null,
-      "captureStartedAt": null,
-      "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:33:48.000Z"
-    },
-    {
-      "server": "1-14",
-      "color": "green",
-      "shieldEndsAt": 1777650524,
-      "ownerTribe": "ARIZE",
-      "contestingTribe": null,
-      "captureStartedAt": null,
-      "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:33:58.000Z"
-    },
-    {
-      "server": "1-17",
-      "color": "blue",
-      "shieldEndsAt": 1777740180,
-      "ownerTribe": "ARK",
-      "contestingTribe": null,
-      "captureStartedAt": null,
-      "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T23:37:38.639Z"
-    },
-    {
-      "server": "1-18",
-      "color": "blue",
-      "shieldEndsAt": 1777736314,
+      "shieldEndsAt": 1777835580,
       "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T23:37:38.639Z"
+      "updatedAt": "2026-05-01T19:25:27.000Z"
+    },
+    {
+      "server": "1-12",
+      "color": "green",
+      "shieldEndsAt": 1777844160,
+      "ownerTribe": "ARK",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-05-01T21:26:40.000Z"
+    },
+    {
+      "server": "1-14",
+      "color": "green",
+      "shieldEndsAt": 1777829460,
+      "ownerTribe": "ARK",
+      "contestingTribe": "APEX",
+      "captureStartedAt": 1777830464,
+      "lastEvent": "claim-started",
+      "updatedAt": "2026-05-03T17:47:44.000Z"
+    },
+    {
+      "server": "1-17",
+      "color": "blue",
+      "shieldEndsAt": 1777916640,
+      "ownerTribe": "ARK",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-05-02T23:24:05.000Z"
+    },
+    {
+      "server": "1-18",
+      "color": "blue",
+      "shieldEndsAt": 1777912740,
+      "ownerTribe": "APEX",
+      "contestingTribe": null,
+      "captureStartedAt": null,
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-05-02T16:03:06.000Z"
     },
     {
       "server": "1-19",
       "color": "blue",
-      "shieldEndsAt": 1777685220,
-      "ownerTribe": "ApexX",
+      "shieldEndsAt": 1777861680,
+      "ownerTribe": "RISK",
       "contestingTribe": null,
       "captureStartedAt": null,
       "lastEvent": "shield-set",
-      "updatedAt": "2026-04-30T01:32:32.000Z"
+      "updatedAt": "2026-05-02T02:14:37.000Z"
     }
   ]
 }
