@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-03T18:43:31.000Z",
+  "updatedAt": "2026-05-03T18:44:36.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -48,13 +48,13 @@
     {
       "server": "1-14",
       "color": "green",
-      "shieldEndsAt": 1777829460,
-      "ownerTribe": "ARK",
-      "contestingTribe": "APEX",
-      "captureStartedAt": 1777830271,
+      "shieldEndsAt": 1778006671,
+      "ownerTribe": "APEX",
+      "contestingTribe": null,
+      "captureStartedAt": null,
       "captureMarker": null,
-      "lastEvent": "tower-stolen",
-      "updatedAt": "2026-05-03T18:43:31.000Z"
+      "lastEvent": "capture-complete",
+      "updatedAt": "2026-05-03T18:44:36.000Z"
     },
     {
       "server": "1-17",
