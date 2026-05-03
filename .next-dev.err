@@ -1,0 +1,45 @@
+⚠ Port 3000 is in use by process 128636, using available port 3001 instead.
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          128636
+- Dir:          C:\Users\zwebn_fwc0na1\Downloads\BuffTower
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 128636 /F to stop it.
+int (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+⨯ Error: Image with src "/tower-art/blue.png?v=2" is using a query string which is not configured in images.localPatterns.
+Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpatterns
+    at ignore-listed frames {
+  digest: '3170323212@E871'
+}
+[browser] Uncaught Error: Image with src "/tower-art/blue.png?v=2" is using a query string which is not configured in images.localPatterns.
+Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpatterns
+    at Array.map (<anonymous>)
+    at TowerDashboard (components/TowerDashboard.tsx:550:13)
+    at HomePage (app\page.tsx:9:10)
+  548 |           <div className={styles.heroArtWrap}>
+  549 |             <div className={styles.heroArtHalo} />
+> 550 |             <Image
+      |             ^
+  551 |               src={COLOR_META[focusTower.color].image}
+  552 |               alt={`${focusTower.color} tower`}
+  553 |               width={108}
+⨯ Error: Image with src "/tower-art/blue.png?v=2" is using a query string which is not configured in images.localPatterns.
+Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpatterns
+    at ignore-listed frames {
+  digest: '3170323212@E871'
+}
+[browser] Uncaught Error: Image with src "/tower-art/blue.png?v=2" is using a query string which is not configured in images.localPatterns.
+Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpatterns
+    at Array.map (<anonymous>)
+    at TowerDashboard (components/TowerDashboard.tsx:550:13)
+    at HomePage (app\page.tsx:9:10)
+  548 |           <div className={styles.heroArtWrap}>
+  549 |             <div className={styles.heroArtHalo} />
+> 550 |             <Image
+      |             ^
+  551 |               src={COLOR_META[focusTower.color].image}
+  552 |               alt={`${focusTower.color} tower`}
+  553 |               width={108}
