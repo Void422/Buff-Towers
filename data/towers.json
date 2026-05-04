@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-04T01:18:09.000Z",
+  "updatedAt": "2026-05-04T02:32:15.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -83,11 +83,11 @@
       "color": "blue",
       "shieldEndsAt": 1777861680,
       "ownerTribe": "RISK",
-      "contestingTribe": null,
-      "captureStartedAt": null,
+      "contestingTribe": ".",
+      "captureStartedAt": 1777861934,
       "captureMarker": null,
-      "lastEvent": "shield-set",
-      "updatedAt": "2026-05-02T02:14:37.000Z"
+      "lastEvent": "claim-started",
+      "updatedAt": "2026-05-04T02:32:15.000Z"
     }
   ]
 }
