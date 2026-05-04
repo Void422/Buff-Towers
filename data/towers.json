@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-04T03:10:53.000Z",
+  "updatedAt": "2026-05-04T04:04:49.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -81,13 +81,13 @@
     {
       "server": "1-19",
       "color": "blue",
-      "shieldEndsAt": 1777861680,
-      "ownerTribe": "RISK",
-      "contestingTribe": "ARIZE",
-      "captureStartedAt": 1777863832,
+      "shieldEndsAt": 1778040232,
+      "ownerTribe": "ARIZE",
+      "contestingTribe": null,
+      "captureStartedAt": null,
       "captureMarker": null,
-      "lastEvent": "tower-stolen",
-      "updatedAt": "2026-05-04T03:10:53.000Z"
+      "lastEvent": "capture-complete",
+      "updatedAt": "2026-05-04T04:04:49.000Z"
     }
   ]
 }
