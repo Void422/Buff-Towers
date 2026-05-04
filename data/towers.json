@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-04T00:10:36.000Z",
+  "updatedAt": "2026-05-04T00:19:24.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -8,9 +8,9 @@
       "ownerTribe": "APEX",
       "contestingTribe": "GRIM",
       "captureStartedAt": 1777853436,
-      "captureMarker": null,
+      "captureMarker": "help",
       "lastEvent": "claim-started",
-      "updatedAt": "2026-05-04T00:10:36.000Z"
+      "updatedAt": "2026-05-04T00:19:24.000Z"
     },
     {
       "server": "1-8",
