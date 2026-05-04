@@ -1,16 +1,16 @@
 {
-  "updatedAt": "2026-05-03T22:45:35.000Z",
+  "updatedAt": "2026-05-04T00:04:39.000Z",
   "towers": [
     {
       "server": "1-7",
       "color": "yellow",
-      "shieldEndsAt": 1777853440,
+      "shieldEndsAt": 1777853340,
       "ownerTribe": "APEX",
       "contestingTribe": null,
       "captureStartedAt": null,
       "captureMarker": null,
-      "lastEvent": "capture-complete",
-      "updatedAt": "2026-05-02T00:10:56.000Z"
+      "lastEvent": "shield-set",
+      "updatedAt": "2026-05-04T00:04:39.000Z"
     },
     {
       "server": "1-8",
