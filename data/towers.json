@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-04T02:38:06.000Z",
+  "updatedAt": "2026-05-04T03:10:53.000Z",
   "towers": [
     {
       "server": "1-7",
@@ -83,11 +83,11 @@
       "color": "blue",
       "shieldEndsAt": 1777861680,
       "ownerTribe": "RISK",
-      "contestingTribe": "APEXX",
-      "captureStartedAt": 1777861685,
+      "contestingTribe": "ARIZE",
+      "captureStartedAt": 1777863832,
       "captureMarker": null,
       "lastEvent": "tower-stolen",
-      "updatedAt": "2026-05-04T02:38:06.000Z"
+      "updatedAt": "2026-05-04T03:10:53.000Z"
     }
   ]
 }
