@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="tower" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#42c8d7" />
+      <stop offset="100%" stop-color="#1a6fb3" />
+    </linearGradient>
+    <linearGradient id="shield" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffd657" />
+      <stop offset="100%" stop-color="#ff8c3a" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="#122231" />
+  <path d="M46 100h36l7-49H39z" fill="url(#tower)" />
+  <path d="M55 20h18l9 18H46z" fill="#e5f7fa" />
+  <path d="M49 45h30l-3 21H52z" fill="#d4f1f4" opacity=".72" />
+  <path
+    d="M64 69c10.5-6.2 21-1.7 21 7.7 0 10.5-8.6 22.3-21 31.3-12.4-9-21-20.8-21-31.3 0-9.4 10.5-13.9 21-7.7Z"
+    fill="url(#shield)"
+  />
+</svg>
+
